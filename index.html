@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jaejoong Receipts</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700;900&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+  html, body { height: 100%; margin: 0; }
+  .recipe-card { transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.4s ease; }
+  .recipe-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+  .modal-overlay { animation: fadeIn 0.3s ease; }
+  .modal-content { animation: slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(40px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  .float-anim { animation: float 3s ease-in-out infinite; }
+  .card-img-wrap { overflow: hidden; }
+  .card-img-wrap img, .card-img-wrap .placeholder-bg { transition: transform 0.5s ease; }
+  .recipe-card:hover .card-img-wrap img,
+  .recipe-card:hover .card-img-wrap .placeholder-bg { transform: scale(1.1); }
+  .scroll-container { scrollbar-width: thin; scrollbar-color: #c4956a #1a1210; }
+  .scroll-container::-webkit-scrollbar { width: 6px; }
+  .scroll-container::-webkit-scrollbar-track { background: #1a1210; }
+  .scroll-container::-webkit-scrollbar-thumb { background: #c4956a; border-radius: 3px; }
+  .tag { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+</style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app" class="w-full h-full overflow-auto scroll-container" style="background: #1a1210; color: #f0e6dc;">
+   <!-- Header -->
+   <header class="relative overflow-hidden" style="background: linear-gradient(135deg, #2a1f1a 0%, #1a1210 50%, #2d1a12 100%);">
+    <div class="absolute inset-0 opacity-10">
+     <div style="position:absolute;top:20px;right:40px;font-size:80px;">
+      🍜
+     </div>
+     <div style="position:absolute;bottom:10px;left:30px;font-size:60px;">
+      🥢
+     </div>
+     <div style="position:absolute;top:40px;left:50%;font-size:50px;" class="float-anim">
+      🌶️
+     </div>
+    </div>
+    <div class="max-w-5xl mx-auto px-6 py-12 text-center relative z-10">
+     <p class="text-xs tracking-[0.35em] uppercase mb-3" style="color: #c4956a; font-family: 'DM Sans', sans-serif;">韓国料理 · Korean Cuisine</p>
+     <h1 id="app-title" class="text-4xl md:text-5xl font-black mb-3" style="font-family: 'Noto Serif KR', serif; color: #f0e6dc;">Jaejoong Receipts</h1>
+     <div class="w-16 h-0.5 mx-auto my-4" style="background: #c4956a;"></div>
+     <p class="text-sm max-w-md mx-auto" style="color: #a89485; font-family: 'DM Sans', sans-serif;">Authentic Korean noodle recipes — click a dish to explore</p>
+    </div>
+   </header><!-- Recipe Grid -->
+   <main class="max-w-5xl mx-auto px-6 py-10">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="recipe-grid"></div>
+   </main><!-- Footer -->
+   <footer class="text-center py-8 text-xs" style="color: #5a4a3e; font-family: 'DM Sans', sans-serif;">
+    Made with 🤍 for Korean food lovers
+   </footer>
+  </div><!-- Modal -->
+  <div id="modal-overlay" class="fixed inset-0 z-50 hidden items-center justify-center p-4" style="background: rgba(10,8,6,0.85); backdrop-filter: blur(8px);">
+   <div class="modal-content w-full max-w-lg max-h-[90%] overflow-auto rounded-2xl relative scroll-container" style="background: #241c17; border: 1px solid #3a2e25;">
+    <button onclick="closeModal()" class="absolute top-3 right-3 z-10 w-9 h-9 rounded-full flex items-center justify-center" style="background: rgba(0,0,0,0.5); color: #c4956a;" aria-label="Close"> <i data-lucide="x" style="width:18px;height:18px;"></i> </button>
+    <div id="modal-image" class="w-full h-52 rounded-t-2xl" style="background: #3a2e25;"></div>
+    <div class="p-6">
+     <h2 id="modal-title" class="text-2xl font-bold mb-1" style="font-family: 'Noto Serif KR', serif; color: #f0e6dc;"></h2>
+     <p id="modal-korean" class="text-sm mb-4" style="color: #c4956a; font-family: 'DM Sans', sans-serif;"></p>
+     <div id="modal-meta" class="flex gap-3 mb-5 flex-wrap"></div>
+     <div id="modal-desc" class="text-sm leading-relaxed mb-5" style="color: #a89485; font-family: 'DM Sans', sans-serif;"></div>
+     <h3 class="text-xs font-bold tracking-widest uppercase mb-3" style="color: #c4956a;">Ingredients</h3>
+     <ul id="modal-ingredients" class="text-sm space-y-1 mb-5" style="color: #c9b9aa; font-family: 'DM Sans', sans-serif;"></ul>
+     <h3 class="text-xs font-bold tracking-widest uppercase mb-3" style="color: #c4956a;">Steps</h3>
+     <ol id="modal-steps" class="text-sm space-y-2" style="color: #c9b9aa; font-family: 'DM Sans', sans-serif;"></ol>
+    </div>
+   </div>
+  </div>
+  <script>
+const recipes = [
+  {
+    id: 1,
+    name: "Bibim-naengmyeon",
+    korean: "비빔냉면",
+    emoji: "🌶️",
+    image: "https://i.pinimg.com/736x/e6/80/eb/e680ebf99520ff3595825be992081443.jpg",
+    time: "40 min",
+    spice: "Spicy",
+    servings: "2",
+    color: "#c0392b",
+    desc: "A fiery cold noodle dish with chewy buckwheat noodles tossed in a sweet, spicy, and tangy gochujang sauce. Perfect for hot summer days.",
+    ingredients: ["400g buckwheat noodles (naengmyeon)", "3 tbsp gochujang", "1 tbsp gochugaru", "2 tbsp rice vinegar", "1 tbsp sugar", "1 tbsp sesame oil", "½ Asian pear, julienned", "1 cucumber, julienned", "1 hard-boiled egg", "Sesame seeds"],
+    steps: ["Cook noodles in boiling water until chewy, then rinse in ice-cold water.", "Mix gochujang, gochugaru, vinegar, sugar, and sesame oil into a sauce.", "Place cold noodles in a bowl, pour sauce over.", "Top with pear, cucumber, egg, and sesame seeds.", "Toss everything together and enjoy cold!"]
+  },
+  {
+    id: 2,
+    name: "Ramen",
+    korean: "라면",
+    emoji: "🍜",
+    image: "https://i.pinimg.com/736x/21/ea/e6/21eae66871ea8e839cbbb9d16bebe98d.jpg",
+    time: "20 min",
+    spice: "Medium",
+    servings: "1",
+    color: "#e67e22",
+    desc: "Korean-style instant ramen elevated with fresh vegetables, an egg, and green onions. Quick, comforting, and endlessly customizable.",
+    ingredients: ["1 pack Korean ramyeon", "1 egg", "2 green onions, sliced", "½ cup kimchi (optional)", "1 slice cheese (optional)", "Mushrooms, sliced", "Water as directed"],
+    steps: ["Boil water as directed on the ramyeon package.", "Add noodles and soup base, cook for 3 minutes.", "Add mushrooms and kimchi if using.", "Crack an egg into the pot, let it set slightly.", "Serve in a bowl topped with green onions and cheese."]
+  },
+  {
+    id: 3,
+    name: "Jjamppong",
+    korean: "짬뽕",
+    emoji: "🦐",
+    image: "https://i.pinimg.com/736x/99/61/17/9961174d3febb4ec39703cc5b8cb2824.jpg",
+    time: "45 min",
+    spice: "Very Spicy",
+    servings: "2",
+    color: "#d35400",
+    desc: "A blazing spicy seafood noodle soup loaded with shrimp, squid, mussels, and vegetables in a rich gochugaru-infused broth.",
+    ingredients: ["200g wheat noodles", "150g mixed seafood (shrimp, squid, mussels)", "1 onion, sliced", "2 tbsp gochugaru", "3 cloves garlic, minced", "1 zucchini, sliced", "4 cups anchovy or pork broth", "1 tbsp soy sauce", "Vegetable oil"],
+    steps: ["Stir-fry garlic and gochugaru in oil until fragrant.", "Add onion, zucchini, and seafood. Cook 3 minutes.", "Pour in broth and soy sauce, bring to a boil.", "Cook noodles separately, then place in bowls.", "Ladle the spicy seafood soup over the noodles."]
+  },
+  {
+    id: 4,
+    name: "Kalguksu",
+    korean: "칼국수",
+    emoji: "🥟",
+    image: "https://i.pinimg.com/736x/13/9f/7d/139f7dc556e170fcd548819ea96e66f3.jpg",
+    time: "50 min",
+    spice: "Mild",
+    servings: "2",
+    color: "#27ae60",
+    desc: "Knife-cut noodle soup in a milky anchovy broth with zucchini and potatoes. Deeply comforting and soul-warming.",
+    ingredients: ["300g kalguksu noodles (or handmade)", "6 cups anchovy broth", "1 zucchini, sliced", "1 potato, diced", "3 cloves garlic, minced", "1 tbsp soy sauce", "Salt to taste", "Green onions for garnish"],
+    steps: ["Simmer dried anchovies and kelp in water for 20 min, strain.", "Add potato to broth, cook until slightly soft.", "Add noodles and zucchini, boil until noodles are tender (7-8 min).", "Season with soy sauce, garlic, and salt.", "Serve hot, garnished with sliced green onions."]
+  }
+];
+
+const defaultConfig = {
+  app_title: "Jaejoong Receipts",
+  background_color: "#1a1210",
+  surface_color: "#241c17",
+  text_color: "#f0e6dc",
+  accent_color: "#c4956a",
+  muted_color: "#a89485",
+  font_family: "Noto Serif KR",
+  font_size: 16
+};
+
+function renderCards() {
+  const grid = document.getElementById('recipe-grid');
+  grid.innerHTML = '';
+  recipes.forEach(r => {
+    const card = document.createElement('div');
+    card.className = 'recipe-card rounded-2xl overflow-hidden cursor-pointer';
+    card.style.background = defaultConfig.surface_color;
+    card.style.border = '1px solid #3a2e25';
+    card.onclick = () => openModal(r);
+    card.innerHTML = `
+      <div class="card-img-wrap h-44 relative">
+        ${r.image
+          ? `<img src="${r.image}" alt="${r.name}" loading="lazy" class="w-full h-full object-cover"
+              onerror="console.error('Image failed:', this.src); this.style.display='none'; this.nextElementSibling.style.display='flex';">
+             <div class="placeholder-bg absolute inset-0 items-center justify-center text-5xl hidden" style="background: linear-gradient(135deg, ${r.color}33, ${r.color}11);">${r.emoji}</div>`
+          : `<div class="placeholder-bg w-full h-full flex items-center justify-center text-5xl" style="background: linear-gradient(135deg, ${r.color}33, ${r.color}11);">${r.emoji}</div>`
+        }
+        <div class="absolute bottom-2 left-2">
+          <span class="tag" style="background: ${r.color}; color: #fff;">${r.spice}</span>
+        </div>
+      </div>
+      <div class="p-4">
+        <h3 class="font-bold text-base mb-0.5" style="font-family: 'Noto Serif KR', serif; color: #f0e6dc;">${r.name}</h3>
+        <p class="text-xs" style="color: #c4956a; font-family: 'DM Sans', sans-serif;">${r.korean}</p>
+        <div class="flex items-center gap-3 mt-3 text-xs" style="color: #7a6a5e; font-family: 'DM Sans', sans-serif;">
+          <span class="flex items-center gap-1"><i data-lucide="clock" style="width:12px;height:12px;"></i>${r.time}</span>
+          <span class="flex items-center gap-1"><i data-lucide="users" style="width:12px;height:12px;"></i>${r.servings}</span>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+  lucide.createIcons();
+}
+
+function openModal(r) {
+  const overlay = document.getElementById('modal-overlay');
+  const imgDiv = document.getElementById('modal-image');
+  if (r.image) {
+    imgDiv.innerHTML = `<img src="${r.image}" alt="${r.name}" loading="lazy" class="w-full h-full object-cover"
+      onerror="console.error('Image failed:', this.src); this.style.display='none'; this.parentElement.innerHTML='<div class=\\'w-full h-full flex items-center justify-center text-6xl\\' style=\\'background:linear-gradient(135deg,${r.color}33,${r.color}11)\\'>${r.emoji}</div>';">`;
+  } else {
+    imgDiv.innerHTML = `<div class="w-full h-full flex items-center justify-center text-6xl" style="background: linear-gradient(135deg, ${r.color}33, ${r.color}11);">${r.emoji}</div>`;
+  }
+  document.getElementById('modal-title').textContent = r.name;
+  document.getElementById('modal-korean').textContent = r.korean;
+  document.getElementById('modal-meta').innerHTML = `
+    <span class="tag" style="background:${r.color};color:#fff;">${r.spice}</span>
+    <span class="tag" style="background:#3a2e25;color:#c4956a;"><i data-lucide="clock" style="width:11px;height:11px;display:inline;vertical-align:-2px;"></i> ${r.time}</span>
+    <span class="tag" style="background:#3a2e25;color:#c4956a;"><i data-lucide="users" style="width:11px;height:11px;display:inline;vertical-align:-2px;"></i> ${r.servings} servings</span>`;
+  document.getElementById('modal-desc').textContent = r.desc;
+  document.getElementById('modal-ingredients').innerHTML = r.ingredients.map(i => `<li class="flex items-start gap-2"><span style="color:${r.color};">•</span> ${i}</li>`).join('');
+  document.getElementById('modal-steps').innerHTML = r.steps.map((s, i) => `<li class="flex gap-3"><span class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style="background:${r.color}22;color:${r.color};">${i+1}</span><span>${s}</span></li>`).join('');
+  overlay.classList.remove('hidden');
+  overlay.classList.add('flex');
+  document.body.style.overflow = 'hidden';
+  lucide.createIcons();
+}
+
+function closeModal() {
+  const overlay = document.getElementById('modal-overlay');
+  overlay.classList.add('hidden');
+  overlay.classList.remove('flex');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('modal-overlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+// Element SDK
+window.elementSdk.init({
+  defaultConfig,
+  onConfigChange: async (config) => {
+    const title = config.app_title || defaultConfig.app_title;
+    document.getElementById('app-title').textContent = title;
+
+    const font = config.font_family || defaultConfig.font_family;
+    document.querySelectorAll('[style*="Noto Serif KR"]').forEach(el => {
+      el.style.fontFamily = `${font}, serif`;
+    });
+
+    const bg = config.background_color || defaultConfig.background_color;
+    document.getElementById('app').style.background = bg;
+
+    const text = config.text_color || defaultConfig.text_color;
+    document.getElementById('app').style.color = text;
+
+    const accent = config.accent_color || defaultConfig.accent_color;
+    document.querySelectorAll('[style*="c4956a"]').forEach(el => {
+      el.style.color = accent;
+    });
+  },
+  mapToCapabilities: (config) => ({
+    recolorables: [
+      { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+      { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+      { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+      { get: () => config.accent_color || defaultConfig.accent_color, set: (v) => { config.accent_color = v; window.elementSdk.setConfig({ accent_color: v }); } },
+      { get: () => config.muted_color || defaultConfig.muted_color, set: (v) => { config.muted_color = v; window.elementSdk.setConfig({ muted_color: v }); } }
+    ],
+    borderables: [],
+    fontEditable: { get: () => config.font_family || defaultConfig.font_family, set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); } },
+    fontSizeable: { get: () => config.font_size || defaultConfig.font_size, set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); } }
+  }),
+  mapToEditPanelValues: (config) => new Map([
+    ["app_title", config.app_title || defaultConfig.app_title]
+  ])
+});
+
+renderCards();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ecc023eb461c9de',t:'MTc3NjI2NzIwNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
