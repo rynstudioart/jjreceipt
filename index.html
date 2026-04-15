@@ -83,7 +83,7 @@ const recipes = [
     name: "Bibim-naengmyeon",
     korean: "비빔냉면",
     emoji: "🌶️",
-    image: "https://i.pinimg.com/736x/e6/80/eb/e680ebf99520ff3595825be992081443.jpg",
+    image: "e680ebf99520ff3595825be992081443.jpg",
     time: "40 min",
     spice: "Spicy",
     servings: "2",
@@ -97,7 +97,7 @@ const recipes = [
     name: "Ramen",
     korean: "라면",
     emoji: "🍜",
-    image: "https://i.pinimg.com/736x/21/ea/e6/21eae66871ea8e839cbbb9d16bebe98d.jpg",
+    image: "21eae66871ea8e839cbbb9d16bebe98d.jpg",
     time: "20 min",
     spice: "Medium",
     servings: "1",
@@ -111,7 +111,7 @@ const recipes = [
     name: "Jjamppong",
     korean: "짬뽕",
     emoji: "🦐",
-    image: "https://i.pinimg.com/736x/99/61/17/9961174d3febb4ec39703cc5b8cb2824.jpg",
+    image: "9961174d3febb4ec39703cc5b8cb2824.jpg",
     time: "45 min",
     spice: "Very Spicy",
     servings: "2",
@@ -125,7 +125,7 @@ const recipes = [
     name: "Kalguksu",
     korean: "칼국수",
     emoji: "🥟",
-    image: "https://i.pinimg.com/736x/13/9f/7d/139f7dc556e170fcd548819ea96e66f3.jpg",
+    image: "139f7dc556e170fcd548819ea96e66f3.jpg",
     time: "50 min",
     spice: "Mild",
     servings: "2",
@@ -156,26 +156,54 @@ function renderCards() {
     card.style.background = defaultConfig.surface_color;
     card.style.border = '1px solid #3a2e25';
     card.onclick = () => openModal(r);
-    card.innerHTML = `
-      <div class="card-img-wrap h-44 relative">
-        ${r.image
-          ? `<img src="${r.image}" alt="${r.name}" loading="lazy" class="w-full h-full object-cover"
-              onerror="console.error('Image failed:', this.src); this.style.display='none'; this.nextElementSibling.style.display='flex';">
-             <div class="placeholder-bg absolute inset-0 items-center justify-center text-5xl hidden" style="background: linear-gradient(135deg, ${r.color}33, ${r.color}11);">${r.emoji}</div>`
-          : `<div class="placeholder-bg w-full h-full flex items-center justify-center text-5xl" style="background: linear-gradient(135deg, ${r.color}33, ${r.color}11);">${r.emoji}</div>`
-        }
-        <div class="absolute bottom-2 left-2">
-          <span class="tag" style="background: ${r.color}; color: #fff;">${r.spice}</span>
-        </div>
-      </div>
-      <div class="p-4">
-        <h3 class="font-bold text-base mb-0.5" style="font-family: 'Noto Serif KR', serif; color: #f0e6dc;">${r.name}</h3>
-        <p class="text-xs" style="color: #c4956a; font-family: 'DM Sans', sans-serif;">${r.korean}</p>
-        <div class="flex items-center gap-3 mt-3 text-xs" style="color: #7a6a5e; font-family: 'DM Sans', sans-serif;">
-          <span class="flex items-center gap-1"><i data-lucide="clock" style="width:12px;height:12px;"></i>${r.time}</span>
-          <span class="flex items-center gap-1"><i data-lucide="users" style="width:12px;height:12px;"></i>${r.servings}</span>
-        </div>
+    
+    const imgWrap = document.createElement('div');
+    imgWrap.className = 'card-img-wrap h-44 relative bg-cover bg-center';
+    imgWrap.style.backgroundImage = `linear-gradient(135deg, ${r.color}33, ${r.color}11)`;
+    
+    if (r.image) {
+      const img = document.createElement('img');
+      img.src = r.image;
+      img.alt = r.name;
+      img.loading = 'lazy';
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'cover';
+      img.onerror = function() {
+        this.style.display = 'none';
+        const fallback = document.createElement('div');
+        fallback.className = 'w-full h-full flex items-center justify-center text-5xl';
+        fallback.textContent = r.emoji;
+        fallback.style.background = `linear-gradient(135deg, ${r.color}33, ${r.color}11)`;
+        this.parentElement.appendChild(fallback);
+      };
+      imgWrap.appendChild(img);
+    } else {
+      const emoji = document.createElement('div');
+      emoji.className = 'w-full h-full flex items-center justify-center text-5xl';
+      emoji.textContent = r.emoji;
+      imgWrap.appendChild(emoji);
+    }
+    
+    const tag = document.createElement('span');
+    tag.className = 'tag absolute bottom-2 left-2';
+    tag.style.background = r.color;
+    tag.style.color = '#fff';
+    tag.textContent = r.spice;
+    imgWrap.appendChild(tag);
+    
+    const content = document.createElement('div');
+    content.className = 'p-4';
+    content.innerHTML = `
+      <h3 class="font-bold text-base mb-0.5" style="font-family: 'Noto Serif KR', serif; color: #f0e6dc;">${r.name}</h3>
+      <p class="text-xs" style="color: #c4956a; font-family: 'DM Sans', sans-serif;">${r.korean}</p>
+      <div class="flex items-center gap-3 mt-3 text-xs" style="color: #7a6a5e; font-family: 'DM Sans', sans-serif;">
+        <span class="flex items-center gap-1"><i data-lucide="clock" style="width:12px;height:12px;"></i>${r.time}</span>
+        <span class="flex items-center gap-1"><i data-lucide="users" style="width:12px;height:12px;"></i>${r.servings}</span>
       </div>`;
+    
+    card.appendChild(imgWrap);
+    card.appendChild(content);
     grid.appendChild(card);
   });
   lucide.createIcons();
@@ -260,5 +288,5 @@ window.elementSdk.init({
 
 renderCards();
 </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ecc023eb461c9de',t:'MTc3NjI2NzIwNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ecc1c22f301e3e8',t:'MTc3NjI2ODI2OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
